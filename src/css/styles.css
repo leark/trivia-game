@@ -1,0 +1,32 @@
+body {
+  background-color: white;
+}
+
+#gameplay {
+  display: none;
+}
+
+#gameAnswer {
+  display: none;
+}
+
+#finalResults {
+  display: none;
+}
+
+fieldset {
+  /* border: 1px black solid; */
+  padding-left: 10px;  
+}
+
+input {
+  margin: .4rem;
+}
+
+#radioDifficulty {
+  margin-bottom: 10px;
+}
+
+#radioQType {
+  margin-bottom: 10px;
+}
