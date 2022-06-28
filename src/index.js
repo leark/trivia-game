@@ -2,13 +2,12 @@ import $ from 'jquery';
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './css/styles.css';
-import TriviaGame from './TriviaGame.js' 
 
 //UI Logic
 $(document).ready(function() {
-  const numberOfQuestions = 10;
+  const numberOfQuestions = 2;
   let currentQuestion = 0;
-  let feedback;
+  let response;
   let score = 0;
   let questions = [];
   let cAnswers = [];
@@ -20,13 +19,19 @@ $(document).ready(function() {
   $('#triviaStart').click(function() {
     const difficulty = $('input[name="difficulty"]:checked').val();
     const category = $('input[name="category"]:checked').val();
-    let promise = TriviaGame.getTrivia(numberOfQuestions, category, difficulty);
-    promise.then(function(response) {
-      feedback = JSON.parse(response);
-      $('#gameSetup').hide();
-      $('#gameplay').show();
-      getElements(feedback.results[0]);
-    });
+
+
+    let request = new XMLHttpRequest();
+    const url = `https://opentdb.com/api.php?amount=${numberOfQuestions}&category=${category}&difficulty=${difficulty}&type=multiple`;
+
+    request.onreadystatechange = function() {
+      if (this.readyState === 4 && this.status === 200) {
+        response = JSON.parse(this.responseText);
+        $('#gameSetup').hide();
+        $('#gameplay').show();
+        getElements(response.results[0]);
+      }
+    };
 
     $('#nextQuestion').click(function() {
       $('input[name="answers"]:checked').prop("checked", false);
@@ -34,12 +39,15 @@ $(document).ready(function() {
       $('#gameplay').show();
       if (currentQuestion < numberOfQuestions) {
         currentQuestion++;
-        getElements(feedback.results[currentQuestion]);
+        getElements(response.results[currentQuestion]);
       }
     });
 
-    function getElements(feedback) {
-      const correctAnswer = utilityF(feedback);
+    request.open("GET", url, true);
+    request.send();
+
+    function getElements(response) {
+      const correctAnswer = utilityF(response);
 
       $('#triviaAnswer').click(function() {
         const answer = $('input[name="answers"]:checked').val();
@@ -64,16 +72,16 @@ $(document).ready(function() {
     }
 
     // response = response.results[index]
-    function utilityF(feedback) {
+    function utilityF(response) {
       let resultsArry = [];
-      resultsArry.push(feedback.question);
-      resultsArry.push(feedback.incorrect_answers[0]);
-      resultsArry.push(feedback.incorrect_answers[1]);
-      resultsArry.push(feedback.incorrect_answers[2]);
-      resultsArry.push(feedback.correct_answer);
+      resultsArry.push(response.question);
+      resultsArry.push(response.incorrect_answers[0]);
+      resultsArry.push(response.incorrect_answers[1]);
+      resultsArry.push(response.incorrect_answers[2]);
+      resultsArry.push(response.correct_answer);
 
-      questions.push(feedback.question);
-      cAnswers.push(feedback.correct_answer);
+      questions.push(response.question);
+      cAnswers.push(response.correct_answer);
 
       for (let i = 0; i < resultsArry.length; i++) {
         resultsArry[i] = resultsArry[i].replaceAll('&rsquo;', '\'');
@@ -104,6 +112,7 @@ $(document).ready(function() {
     console.log(questions);
     console.log(cAnswers);
   }
+});
 
 
 
@@ -123,7 +132,5 @@ function shuffle(array) {
       array[randomIndex], array[currentIndex]];
   }
 
-  return array; 
-// });
-  }
-})
+  return array;
+}
