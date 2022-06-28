@@ -2,9 +2,10 @@ import $ from 'jquery';
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './css/styles.css';
+import TriviaService from './trivia-service';
 
 //UI Logic
-$(document).ready(function() {
+$(document).ready(function () {
   const numberOfQuestions = 2;
   let currentQuestion = 0;
   let response;
@@ -12,29 +13,31 @@ $(document).ready(function() {
   let questions = [];
   let cAnswers = [];
 
-  $('#tryAgain').click(function() {
+  $('#tryAgain').click(function () {
     window.location.reload();
   });
 
-  $('#triviaStart').click(function() {
+  $('#triviaStart').click(function () {
     const difficulty = $('input[name="difficulty"]:checked').val();
     const category = $('input[name="category"]:checked').val();
 
+    let promise = TriviaService.getTrivia(
+      numberOfQuestions,
+      category,
+      difficulty
+    );
 
-    let request = new XMLHttpRequest();
-    const url = `https://opentdb.com/api.php?amount=${numberOfQuestions}&category=${category}&difficulty=${difficulty}&type=multiple`;
-
-    request.onreadystatechange = function() {
-      if (this.readyState === 4 && this.status === 200) {
-        response = JSON.parse(this.responseText);
-        $('#gameSetup').hide();
-        $('#gameplay').show();
-        getElements(response.results[0]);
+    promise.then(
+      function (response) {
+        getElements(response);
+      },
+      function (error) {
+        console.log(error);
       }
-    };
+    );
 
-    $('#nextQuestion').click(function() {
-      $('input[name="answers"]:checked').prop("checked", false);
+    $('#nextQuestion').click(function () {
+      $('input[name="answers"]:checked').prop('checked', false);
       $('#gameAnswer').hide();
       $('#gameplay').show();
       if (currentQuestion < numberOfQuestions) {
@@ -43,19 +46,22 @@ $(document).ready(function() {
       }
     });
 
-    request.open("GET", url, true);
-    request.send();
-
     function getElements(response) {
+      response = JSON.parse(response);
+      $('#gameSetup').hide();
+      $('#gameplay').show();
+
+      response = response.results[0];
+
       const correctAnswer = utilityF(response);
 
-      $('#triviaAnswer').click(function() {
+      $('#triviaAnswer').click(function () {
         const answer = $('input[name="answers"]:checked').val();
         $('#gameplay').hide();
         $('#gameAnswer').show();
         let result;
         if (answer === correctAnswer) {
-          result = "That is correct!";
+          result = 'That is correct!';
           score++;
         } else {
           result = `Sorry, the correct answer is ${correctAnswer}`;
@@ -64,7 +70,9 @@ $(document).ready(function() {
         if (currentQuestion === numberOfQuestions - 1) {
           $('#gameAnswer').hide();
           $('.showResult').show();
-          $('#finalScore').text(`CONGRATULATIONS, YOUR SCORE IS ${score} OUT OF ${numberOfQuestions} QUESTIONS!`);
+          $('#finalScore').text(
+            `CONGRATULATIONS, YOUR SCORE IS ${score} OUT OF ${numberOfQuestions} QUESTIONS!`
+          );
           // showQsAs();
           $('#finalResults').show();
         }
@@ -84,8 +92,8 @@ $(document).ready(function() {
       cAnswers.push(response.correct_answer);
 
       for (let i = 0; i < resultsArry.length; i++) {
-        resultsArry[i] = resultsArry[i].replaceAll('&rsquo;', '\'');
-        resultsArry[i] = resultsArry[i].replaceAll('&#039;', '\'');
+        resultsArry[i] = resultsArry[i].replaceAll('&rsquo;', "'");
+        resultsArry[i] = resultsArry[i].replaceAll('&#039;', "'");
         resultsArry[i] = resultsArry[i].replaceAll('&quot;', '"');
       }
 
@@ -104,32 +112,32 @@ $(document).ready(function() {
       return resultsArry[4];
     }
   });
-  function showQsAs() {
-    for (let i = 0; i < questions.length; i++) {
-      $('#questionsList').append(questions[i]);
-      $('#answers').append(cAnswers[i]);
-    }
-    console.log(questions);
-    console.log(cAnswers);
-  }
+  // function showQsAs() {
+  //   for (let i = 0; i < questions.length; i++) {
+  //     $('#questionsList').append(questions[i]);
+  //     $('#answers').append(cAnswers[i]);
+  //   }
+  //   console.log(questions);
+  //   console.log(cAnswers);
+  // }
 });
-
-
 
 // from https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
 function shuffle(array) {
-  let currentIndex = array.length,  randomIndex;
+  let currentIndex = array.length,
+    randomIndex;
 
   // While there remain elements to shuffle.
   while (currentIndex != 0) {
-
     // Pick a remaining element.
     randomIndex = Math.floor(Math.random() * currentIndex);
     currentIndex--;
 
     // And swap it with the current element.
     [array[currentIndex], array[randomIndex]] = [
-      array[randomIndex], array[currentIndex]];
+      array[randomIndex],
+      array[currentIndex],
+    ];
   }
 
   return array;
